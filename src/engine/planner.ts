@@ -23,6 +23,12 @@ export interface PlanInput {
   conferenceChampionshipWeek: number;
   /** dynasty week (0-based) -> real week (1-based); usually w+1 */
   weekOffset: number;
+  /**
+   * When true, a matched game whose row is pre-decided (status != Unplayed
+   * but IsSimmed — the week-0 quirk) is reverted to unplayed and forced,
+   * instead of skipped. Mirrors MyDynasty's revertPreSimulatedGame.
+   */
+  resetPredecided: boolean;
 }
 
 function norm(s: string): string {
@@ -61,6 +67,7 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
     gamesSkippedUser: 0,
     gamesSkippedProtected: 0,
     gamesNoRealMatch: 0,
+    gamesReset: 0,
     forceWinsApplied: 0,
   };
 
@@ -93,9 +100,19 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
   for (const g of input.games) {
     if (g.weekType !== 'RegularSeason') continue;
     summary.gamesFound++;
+
+    // Pre-decided rows: the vendored tool skips these outright. With
+    // resetPredecided, rows carrying the week-0 quirk (IsSimmed but the
+    // season hasn't started) are reverted to unplayed below instead.
+    // A row the user actually played (not simmed) is never reset.
+    let needsReset = false;
     if (g.status !== 'Unplayed') {
-      summary.gamesSkippedPlayed++;
-      continue;
+      if (input.resetPredecided && g.isSimmed) {
+        needsReset = true;
+      } else {
+        summary.gamesSkippedPlayed++;
+        continue;
+      }
     }
     if (g.forceWin !== 'None') {
       summary.gamesSkippedForced++;
@@ -164,7 +181,9 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
       awayName: g.awayName,
       winnerName: value === 'Home' ? g.homeName : g.awayName,
       realScore: `${win.awayTeam} @ ${win.homeTeam}`,
+      reset: needsReset,
     });
+    if (needsReset) summary.gamesReset++;
     summary.forceWinsApplied++;
   }
 

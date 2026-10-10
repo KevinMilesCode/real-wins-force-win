@@ -82,6 +82,7 @@ export async function readSchedule(file: any): Promise<ScheduleRead> {
       weekType: String(sf(row, 'SeasonWeekType') ?? ''),
       status: String(sf(row, 'GameStatus') ?? ''),
       forceWin: String(sf(row, 'ForceWin') ?? 'None'),
+      isSimmed: !!sf(row, 'IsSimmed'),
       isPostseasonLinked: !!sf(row, 'BowlGame') && sf(row, 'BowlGame') !== '0'.repeat(32),
       homeTeamRow: homeRef.row,
       awayTeamRow: awayRef.row,
@@ -97,11 +98,39 @@ export async function readSchedule(file: any): Promise<ScheduleRead> {
 export interface WriteResult {
   backupPath: string;
   written: number;
+  reset: number;
 }
+
+/**
+ * Fields reverted by a quirk reset (MyDynasty's revertPreSimulatedGame).
+ * Everything else on the row must be untouched — enforced below.
+ */
+const RESET_FIELDS: Record<string, unknown> = {
+  GameStatus: 'Unplayed',
+  IsSimmed: false,
+  HomeScore: 0,
+  AwayScore: 0,
+  HomeScoreQuarter1: 0,
+  HomeScoreQuarter2: 0,
+  HomeScoreQuarter3: 0,
+  HomeScoreQuarter4: 0,
+  AwayScoreQuarter1: 0,
+  AwayScoreQuarter2: 0,
+  AwayScoreQuarter3: 0,
+  AwayScoreQuarter4: 0,
+  HomeScoreOT: 0,
+  AwayScoreOT: 0,
+  IsOvertimeGame: false,
+  GameOfTheWeekScore: 0,
+};
 
 /**
  * Write ForceWin on the assigned rows. All-or-nothing: validates the
  * snapshot fields are otherwise untouched before saving.
+ *
+ * Rows flagged reset:true are first reverted to unplayed (the week-0
+ * pre-decided quirk): GameStatus/IsSimmed/scores cleared, then ForceWin
+ * applied. The snapshot check covers the wider field list on those rows.
  */
 export async function writeForceWins(
   file: any,
@@ -119,16 +148,31 @@ export async function writeForceWins(
     'HomeTeam', 'AwayTeam', 'SeasonYear', 'SeasonWeek', 'SeasonWeekType',
     'GameStatus', 'HomeScore', 'AwayScore', 'BowlGame',
   ];
+  const RESET_SNAPSHOT = [
+    'HomeTeam', 'AwayTeam', 'SeasonYear', 'SeasonWeek', 'SeasonWeekType', 'BowlGame',
+  ];
+  let reset = 0;
   for (const a of assignments) {
     const row = sgT.records[a.gameIndex];
     if (!row || row.isEmpty) throw new Error(`SeasonGame row ${a.gameIndex} missing`);
-    const before = SNAPSHOT.map((f) => sf(row, f));
-    row['ForceWin'] = a.value;
-    const after = SNAPSHOT.map((f) => sf(row, f));
-    if (JSON.stringify(before) !== JSON.stringify(after)) {
-      throw new Error(`row ${a.gameIndex}: non-ForceWin field changed — aborting`);
+    if (a.reset) {
+      const before = RESET_SNAPSHOT.map((f) => sf(row, f));
+      for (const [f, v] of Object.entries(RESET_FIELDS)) row[f] = v;
+      row['ForceWin'] = a.value;
+      const after = RESET_SNAPSHOT.map((f) => sf(row, f));
+      if (JSON.stringify(before) !== JSON.stringify(after)) {
+        throw new Error(`row ${a.gameIndex}: non-reset field changed — aborting`);
+      }
+      reset++;
+    } else {
+      const before = SNAPSHOT.map((f) => sf(row, f));
+      row['ForceWin'] = a.value;
+      const after = SNAPSHOT.map((f) => sf(row, f));
+      if (JSON.stringify(before) !== JSON.stringify(after)) {
+        throw new Error(`row ${a.gameIndex}: non-ForceWin field changed — aborting`);
+      }
     }
   }
   await file.save();
-  return { backupPath, written: assignments.length };
+  return { backupPath, written: assignments.length, reset };
 }

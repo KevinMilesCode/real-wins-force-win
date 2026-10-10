@@ -9,6 +9,8 @@ export interface DynastyGame {
   weekType: string; // 'RegularSeason' | ...
   status: string; // 'Unplayed' | ...
   forceWin: string; // 'None' | 'Home' | 'Away'
+  /** SeasonGame.IsSimmed — true on the pre-decided "quirk" rows */
+  isSimmed: boolean;
   isPostseasonLinked: boolean;
   homeTeamRow: number;
   awayTeamRow: number;
@@ -24,6 +26,12 @@ export interface ForceWinAssignment {
   awayName: string;
   winnerName: string;
   realScore: string; // "35-28"
+  /**
+   * True when the row must first be reverted to unplayed (the pre-decided
+   * quirk): GameStatus -> Unplayed, IsSimmed -> false, all scores -> 0.
+   * Mirrors MyDynasty's revertPreSimulatedGame.
+   */
+  reset: boolean;
 }
 
 export interface PlanSummary {
@@ -33,5 +41,6 @@ export interface PlanSummary {
   gamesSkippedUser: number;
   gamesSkippedProtected: number;
   gamesNoRealMatch: number;
+  gamesReset: number;
   forceWinsApplied: number;
 }

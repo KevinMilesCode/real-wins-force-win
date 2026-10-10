@@ -96,12 +96,20 @@ decoding the `HomeTeam`/`AwayTeam` binary refs (32-char, 15-bit tableId +
 Neutral-site games match on pair regardless of home/away order; the winner
 is resolved by team identity, not position, so designation flips don't matter.
 
-### 4. Timing: one run at dynasty week 0 (preseason)
-Fill `winners.json` with every completed real-life result, run once before
-the season starts. Every dynasty game with a real result gets forced; games
-with no real result yet are left alone to sim naturally. (Re-running stays
-idempotent — already-forced/played games are skipped — but the intended flow
-is a single preseason pass.)
+### 5. Pre-decided quirk rows (reset option)
+A week-0 save can carry rows the game pre-decided: `GameStatus` is
+`HomeWon`/`AwayWon` with `IsSimmed=true` and real-looking scores (in the
+verified save: the 11-game 8/29 slate), even though the season hasn't
+started. The vendored tool skips these (`status !== 'Unplayed'`), and
+`ForceWin` on an already-simmed row likely no-ops in-game anyway.
+
+With `resetPredecided` on, a matched quirk row is reverted first —
+`GameStatus` → `Unplayed`, `IsSimmed` → false, all scores/quarters/OT and
+`GameOfTheWeekScore` → 0 — then forced normally. This mirrors MyDynasty's
+`revertPreSimulatedGame`. Only rows with `IsSimmed=true` are ever reset; a
+row the user actually played is never touched. Rows with no real result are
+left alone (not wiped). The writer snapshot-validates the wider field list
+on reset rows; everything else on the row must be untouched.
 
 ### 5. Write path (same as vendored)
 `SeasonGame.ForceWin = 'Home' | 'Away'` on matched rows only. Same safety:

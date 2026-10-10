@@ -51,6 +51,9 @@ async function main(): Promise<void> {
   }
 
   const forceUser = await confirm('Force user-team games too?');
+  const resetQuirks = await confirm(
+    'Reset pre-decided quirk games (IsSimmed rows reverted to unplayed, then forced)?',
+  );
   const plan = planRealLifeForceWin({
     games: sched.games,
     teamMap,
@@ -59,15 +62,24 @@ async function main(): Promise<void> {
     forceUserGames: forceUser,
     conferenceChampionshipWeek: sched.conferenceChampionshipWeek,
     weekOffset: 0, // verified vs real save: dynasty week N == real week N
+    resetPredecided: resetQuirks,
   });
 
+  const resets = plan.assignments.filter((a) => a.reset);
+  const forces = plan.assignments.filter((a) => !a.reset);
   console.log('\n--- FORCE-WIN PREVIEW ---');
-  for (const a of plan.assignments) {
+  for (const a of forces) {
     console.log(`  wk${a.week} ${a.awayName} @ ${a.homeName} -> ${a.winnerName} wins`);
+  }
+  if (resets.length) {
+    console.log('\n--- RESET + FORCE (pre-decided quirk rows reverted to unplayed first) ---');
+    for (const a of resets) {
+      console.log(`  wk${a.week} ${a.awayName} @ ${a.homeName} -> RESET, then ${a.winnerName} wins`);
+    }
   }
   const s = plan.summary;
   console.log(
-    `\nforcing ${s.forceWinsApplied} games | skipped: played ${s.gamesSkippedPlayed}, ` +
+    `\nforcing ${s.forceWinsApplied} games (${s.gamesReset} resets) | skipped: played ${s.gamesSkippedPlayed}, ` +
       `forced ${s.gamesSkippedForced}, user ${s.gamesSkippedUser}, protected ${s.gamesSkippedProtected} | ` +
       `no match ${s.gamesNoRealMatch}`,
   );
@@ -82,13 +94,15 @@ async function main(): Promise<void> {
     console.log('Nothing to force.');
     return;
   }
-  if (!(await confirm('\nWrite these ForceWin assignments to the save?'))) {
+  if (!(await confirm(`\nWrite these ForceWin assignments to the save${resets.length ? ` (including ${resets.length} quirk resets)` : ''}?`))) {
     console.log('Aborted — save untouched.');
     return;
   }
 
   const result = await writeForceWins(file, savePath, plan.assignments);
-  console.log(`Done. ${result.written} games forced. Backup: ${result.backupPath}`);
+  console.log(
+    `Done. ${result.written} games forced${result.reset ? ` (${result.reset} quirk rows reset first)` : ''}. Backup: ${result.backupPath}`,
+  );
   writeFileSync(
     'forcewin-manifest.json',
     JSON.stringify(
