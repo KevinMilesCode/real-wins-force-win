@@ -58,7 +58,7 @@ async function main(): Promise<void> {
     userTeams: sched.userTeams,
     forceUserGames: forceUser,
     conferenceChampionshipWeek: sched.conferenceChampionshipWeek,
-    weekOffset: 1, // dynasty week 0 == real week 1
+    weekOffset: 0, // verified vs real save: dynasty week N == real week N
   });
 
   console.log('\n--- FORCE-WIN PREVIEW ---');

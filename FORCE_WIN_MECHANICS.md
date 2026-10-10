@@ -86,7 +86,7 @@ decoding the `HomeTeam`/`AwayTeam` binary refs (32-char, 15-bit tableId +
 
 ### 3. Game matching
 - **Both teams mapped**: pair lookup, real week within ±1 of dynasty week +
-  offset (dynasty week 0 == real week 1; verify against the save).
+  offset 0 (verified 2026-10-10 against a real week-0 save: dynasty week N == real-life week N; week 0 holds real week 1's Thursday/Friday games, covered by the ±1 window).
 - **One side generic in-game FCS** (`DisplayName` starts with `"FCS "`):
   match by **(FBS team + week)** — find the winners-file entry that week
   involving the FBS team. The real FCS school name in the file is irrelevant
@@ -110,9 +110,14 @@ nothing per run.
 
 ## Open questions for Kevin
 
-1. **Data source**: ESPN (keyless) or CFBD (keyed, cleaner)?
+1. **Data source** — RESOLVED 2026-10-10 (Kevin): no real-time lookup in the
+   tool; results live in a manually-maintained `winners.json` (seeded with
+   402 real games for weeks 1–6 on 2026-10-10; hand-updated from there).
 2. **User teams**: force their games to real results too, or always skip?
-3. **No-match games**: skip silently, or fall back to the ratings-based force
-   for those?
-4. **Postseason**: real-life bowls/playoff mirrored too, or regular season only?
-5. **Week mapping**: verify dynasty week 0 == real week 1 (check against save).
+   (still open)
+3. **No-match games** — RESOLVED 2026-10-10 (Kevin): leave them alone, report
+   as unmatched with the reason. No ratings-based fallback.
+4. **Postseason** — N/A for the week-0 single run: postseason games haven't
+   been played yet, so there's nothing to force.
+5. **Week mapping** — needs verification against his save at run time
+   (verified `weekOffset: 0` against a real save, 2026-10-10).

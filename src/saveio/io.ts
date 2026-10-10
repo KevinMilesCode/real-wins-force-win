@@ -10,9 +10,10 @@ import type { DynastyGame, ForceWinAssignment } from '../types.js';
 
 const require = createRequire(import.meta.url);
 
-// SeasonGame uniqueId — confirm against registry (CFB27-Dynasty-Engine-Dev).
+// SeasonGame uniqueId — confirmed against CFB27-Dynasty-Engine-Dev registry
+// (app/src/saveio/cfb27/registry.ts: seasonGame: 4049338978).
 // Team 3359508968, SeasonInfo 3123991521 are confirmed.
-const SEASON_GAME_UID = 0; // TODO: resolve from registry
+const SEASON_GAME_UID = 4049338978;
 const TEAM_UID = 3359508968;
 const SEASON_INFO_UID = 3123991521;
 
@@ -29,8 +30,13 @@ function sf<T = unknown>(rec: any, field: string): T | undefined {
 }
 
 export async function openSave(savePath: string): Promise<any> {
-  const { Franchise } = require('madden-franchise');
-  return Franchise.create(savePath, {});
+  const { FranchiseFile } = require('madden-franchise');
+  return new Promise((resolve, reject) => {
+    const f = new FranchiseFile(savePath, { autoParse: false });
+    f.on('ready', () => resolve(f));
+    f.on('error', reject);
+    f.parse();
+  });
 }
 
 export interface ScheduleRead {
