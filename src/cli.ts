@@ -1,20 +1,15 @@
-// force-win CLI: real-life results -> ForceWin assignments.
+// force-win CLI: manual winners file -> ForceWin assignments.
 //
-// Flow:
-//   1. save path -> read schedule
-//   2. fetch real-life results (ESPN) for weeks up to the current real week
-//   3. plan (dry run) -> preview forced games
-//   4. confirm -> write SeasonGame.ForceWin -> backup
-//
-// Idempotent: re-running skips already-forced/played games. Run weekly.
+// ONE run at dynasty week 0 (preseason). Loads every completed real-life
+// result from the winners file and forces those matchups; games with no
+// real result yet are left alone to sim naturally.
 
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { EspnSource } from './reallife/espn.js';
+import { parseWinnersFile } from './reallife/winners.js';
 import { planRealLifeForceWin } from './engine/planner.js';
 import { openSave, readSchedule, writeForceWins } from './saveio/io.js';
-import type { RealGame } from './types.js';
 
 const rl = createInterface({ input, output });
 const ask = (q: string) => rl.question(q);
@@ -24,7 +19,7 @@ async function confirm(q: string): Promise<boolean> {
 }
 
 async function main(): Promise<void> {
-  console.log('CFB27 Force Win — real-life results\n');
+  console.log('CFB27 Force Win — manual real-life winners (one run at week 0)\n');
 
   const savePath = (await ask('Dynasty save path: ')).trim();
   if (!savePath) throw new Error('no save path given');
@@ -34,39 +29,32 @@ async function main(): Promise<void> {
   const sched = await readSchedule(file);
   console.log(`  ${sched.games.length} schedule rows, current week ${sched.currentWeek}`);
 
-  // team mapping: real ESPN name -> in-game DisplayName
+  // team mapping: real name -> in-game DisplayName (FCS schools need no entry)
   const mapPath = (await ask('Team map file [teams.json]: ')).trim() || 'teams.json';
   let teamMap = new Map<string, string>();
   if (existsSync(mapPath)) {
     const raw = JSON.parse(readFileSync(mapPath, 'utf8'));
     teamMap = new Map(Object.entries(raw).filter(([k]) => !k.startsWith('_')) as [string, string][]);
+    console.log(`  ${teamMap.size} mapped teams`);
   } else {
-    console.log('  no team map — every game will be unmatched. Create teams.json first.');
+    console.log('  no team map — only FCS matching will work. Create teams.json first.');
   }
 
-  const season = Number((await ask('Real-life season year [2026]: ')).trim() || 2026);
-  const thruWeek = Number((await ask('Fetch real results thru week [7]: ')).trim() || 7);
-  const source = new EspnSource(season);
+  const winnersPath = (await ask('Winners file [winners.json]: ')).trim() || 'winners.json';
+  const wins = parseWinnersFile(winnersPath);
+  console.log(`  ${wins.length} real results loaded`);
 
-  console.log('Fetching real-life results…');
-  const realGames: RealGame[] = [];
-  for (let w = 1; w <= thruWeek; w++) {
-    const gs = await source.fetchWeek(w);
-    console.log(`  week ${w}: ${gs.length} completed games`);
-    realGames.push(...gs);
-  }
-
-  // warn on real teams with no mapping
-  const seenReal = new Set(realGames.flatMap((g) => [g.homeTeam, g.awayTeam]));
+  // warn on winners-file teams with no mapping (excluding FCS schools)
+  const seenReal = new Set(wins.flatMap((w) => [w.homeTeam, w.awayTeam]));
   for (const name of [...seenReal].sort()) {
-    if (!teamMap.has(name)) console.log(`  unmapped real team: ${name}`);
+    if (!teamMap.has(name)) console.log(`  unmapped (assumed FCS): ${name}`);
   }
 
   const forceUser = await confirm('Force user-team games too?');
   const plan = planRealLifeForceWin({
     games: sched.games,
     teamMap,
-    realGames,
+    wins,
     userTeams: sched.userTeams,
     forceUserGames: forceUser,
     conferenceChampionshipWeek: sched.conferenceChampionshipWeek,
@@ -75,18 +63,19 @@ async function main(): Promise<void> {
 
   console.log('\n--- FORCE-WIN PREVIEW ---');
   for (const a of plan.assignments) {
-    console.log(`  wk${a.week} ${a.awayName} @ ${a.homeName} -> ${a.winnerName} wins (${a.realScore})`);
+    console.log(`  wk${a.week} ${a.awayName} @ ${a.homeName} -> ${a.winnerName} wins`);
   }
   const s = plan.summary;
   console.log(
     `\nforcing ${s.forceWinsApplied} games | skipped: played ${s.gamesSkippedPlayed}, ` +
       `forced ${s.gamesSkippedForced}, user ${s.gamesSkippedUser}, protected ${s.gamesSkippedProtected} | ` +
-      `no real match ${s.gamesNoRealMatch}`,
+      `no match ${s.gamesNoRealMatch}`,
   );
   if (plan.unmatched.length) {
-    console.log('unmatched (no real-life counterpart):');
-    for (const u of plan.unmatched.slice(0, 10)) console.log(`  wk${u.week} ${u.awayName} @ ${u.homeName}`);
-    if (plan.unmatched.length > 10) console.log(`  …and ${plan.unmatched.length - 10} more`);
+    console.log('unmatched:');
+    for (const u of plan.unmatched.slice(0, 12))
+      console.log(`  wk${u.week} ${u.awayName} @ ${u.homeName} — ${u.reason}`);
+    if (plan.unmatched.length > 12) console.log(`  …and ${plan.unmatched.length - 12} more`);
   }
 
   if (!plan.assignments.length) {
@@ -102,7 +91,11 @@ async function main(): Promise<void> {
   console.log(`Done. ${result.written} games forced. Backup: ${result.backupPath}`);
   writeFileSync(
     'forcewin-manifest.json',
-    JSON.stringify({ createdAt: new Date().toISOString(), season, thruWeek, assignments: plan.assignments, summary: s }, null, 2),
+    JSON.stringify(
+      { createdAt: new Date().toISOString(), winnersFile: winnersPath, assignments: plan.assignments, summary: s },
+      null,
+      2,
+    ),
   );
 }
 

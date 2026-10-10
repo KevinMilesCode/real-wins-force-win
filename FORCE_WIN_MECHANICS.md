@@ -61,44 +61,47 @@ decoding the `HomeTeam`/`AwayTeam` binary refs (32-char, 15-bit tableId +
 
 ## What the real-life version needs
 
-### 1. Real-life data source
-Options, easiest first:
+### 1. Winners file (manual — Kevin's call, no API)
+`winners.json`, updated by hand each week:
 
-- **ESPN scoreboard API** (free, keyless): `site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard?dates=YYYYMMDD&groups=...`
-  per-week scoreboards with teams + scores + status. No auth, but unofficial.
-- **CollegeFootballData (CFBD) API**: official-ish, needs free API key.
-  `/games?year=2026&week=N&seasonType=regular` returns completed games with
-  scores. Better structured, key required.
+```json
+{
+  "season": 2026,
+  "weeks": {
+    "1": [
+      { "matchup": "Texas @ Ohio State", "winner": "Ohio State" },
+      { "matchup": "Mercer @ Alabama", "winner": "Alabama" }
+    ]
+  }
+}
+```
 
-Recommendation: ESPN for v1 (no key, no signup), CFBD as fallback. Both give
-final scores; we only need winner, not margin.
+- `matchup` is `"AWAY @ HOME"` in the same names used in `teams.json`.
+- Only completed games go in — if it's not in the file, it's not forced.
+- The CLI validates: winner must be one of the two matchup teams.
 
 ### 2. Team name mapping
-Real-life names ("Ohio State Buckeyes") → in-game `DisplayName` ("Ohio State").
-Needs a mapping table (~138 FBS teams). Mostly trivial string normalization
-(strip mascot, handle "Texas A&M" / "Miami (FL)" / "Ole Miss" edge cases).
-Ship a `teams.json` map; CLI warns on unmapped names.
+`teams.json`: real name → in-game `DisplayName`. FCS schools need **no entry**
+(see FCS handling below). The CLI warns on winners-file names with no mapping.
 
 ### 3. Game matching
-Dynasty game `(home, away, week)` → real game. Match on **team pair +
-real-week window**: the dynasty week N maps to real-life week N of the 2026
-season (both 0-based or both 1-based — verify against the save). Neutral-site
-and rivalry games match on pair regardless of home/away order.
+- **Both teams mapped**: pair lookup, real week within ±1 of dynasty week +
+  offset (dynasty week 0 == real week 1; verify against the save).
+- **One side generic in-game FCS** (`DisplayName` starts with `"FCS "`):
+  match by **(FBS team + week)** — find the winners-file entry that week
+  involving the FBS team. The real FCS school name in the file is irrelevant
+  to matching; only the FBS side matters.
+- **Neither side mapped / ambiguous** → skip, reported as unmatched.
 
-Edge cases:
-- Dynasty has a matchup real life doesn't (conference realignment,
-  user-customized schedules) → skip (protection #6)
-- Real life has the matchup on a different week (bye shifts) → match within
-  ±1 week window, prefer exact
-- FCS opponents: real FCS results exist on ESPN/CFBD but the in-game FCS
-  teams are generic ("FCS East") → skip unless mapped
+Neutral-site games match on pair regardless of home/away order; the winner
+is resolved by team identity, not position, so designation flips don't matter.
 
-### 4. Timing (key difference from the ratings tool)
-The ratings tool runs **preseason** (all decisions upfront). The real-life
-tool runs **weekly through the season**: each run forces only games whose
-real counterpart has a final score. Re-running is idempotent (skips already-
-forced/played games). Recommended: run after each real-life week, before
-simming that dynasty week.
+### 4. Timing: one run at dynasty week 0 (preseason)
+Fill `winners.json` with every completed real-life result, run once before
+the season starts. Every dynasty game with a real result gets forced; games
+with no real result yet are left alone to sim naturally. (Re-running stays
+idempotent — already-forced/played games are skipped — but the intended flow
+is a single preseason pass.)
 
 ### 5. Write path (same as vendored)
 `SeasonGame.ForceWin = 'Home' | 'Away'` on matched rows only. Same safety:

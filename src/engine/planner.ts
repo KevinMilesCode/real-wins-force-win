@@ -1,22 +1,22 @@
 // Real-life force-win planner: pure decision layer.
 //
-// Unlike the ratings-based tool (disparity math + probability curve + seeded
-// RNG), this is a deterministic lookup: the real winner is the winner.
-// No randomness anywhere.
+// Deterministic lookup: the real winner (from the manual winners file) is
+// the winner. No disparity math, no probability curve, no RNG.
+//
+// Matching:
+//   - Both teams mapped -> pair lookup by (teams, week ±1).
+//   - One side generic in-game FCS ("FCS ...") -> match by (FBS team + week):
+//     find the winners-file entry that week involving the FBS team.
+//   - Else -> unmatched (skipped, reported).
 
-import type {
-  DynastyGame,
-  ForceWinAssignment,
-  PlanSummary,
-  RealGame,
-} from '../types.js';
+import type { DynastyGame, ForceWinAssignment, PlanSummary } from '../types.js';
+import type { ParsedWin } from '../reallife/winners.js';
 
 export interface PlanInput {
   games: readonly DynastyGame[];
-  /** normalized real team name -> in-game team name */
+  /** real team name -> in-game DisplayName */
   teamMap: ReadonlyMap<string, string>;
-  /** real games, keyed by normalized pair */
-  realGames: readonly RealGame[];
+  wins: readonly ParsedWin[];
   /** in-game team names that are user-controlled — skipped unless forced */
   userTeams: ReadonlySet<string>;
   forceUserGames: boolean;
@@ -34,6 +34,11 @@ export function pairKey(a: string, b: string): string {
   return [norm(a), norm(b)].sort().join('|');
 }
 
+/** In-game generic FCS teams: DisplayName starts with "FCS ". */
+export function isGenericFcs(inGameName: string): boolean {
+  return norm(inGameName).startsWith('fcs ');
+}
+
 function protectionReason(g: DynastyGame, ccgWeek: number): string | null {
   if (g.isPostseasonLinked) return 'postseason';
   if (g.week === ccgWeek) return 'conference championship week';
@@ -43,16 +48,12 @@ function protectionReason(g: DynastyGame, ccgWeek: number): string | null {
 export interface PlanResult {
   assignments: ForceWinAssignment[];
   summary: PlanSummary;
-  /** games with no real-life counterpart (for the report) */
-  unmatched: { week: number; homeName: string; awayName: string }[];
-  /** games whose real counterpart hasn't been played yet */
-  pending: { week: number; homeName: string; awayName: string }[];
+  unmatched: { week: number; homeName: string; awayName: string; reason: string }[];
 }
 
 export function planRealLifeForceWin(input: PlanInput): PlanResult {
   const assignments: ForceWinAssignment[] = [];
   const unmatched: PlanResult['unmatched'] = [];
-  const pending: PlanResult['pending'] = [];
   const summary: PlanSummary = {
     gamesFound: 0,
     gamesSkippedPlayed: 0,
@@ -60,17 +61,34 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
     gamesSkippedUser: 0,
     gamesSkippedProtected: 0,
     gamesNoRealMatch: 0,
-    gamesRealNotPlayed: 0,
     forceWinsApplied: 0,
   };
 
-  // index real games by pair key; keep the latest week on collision
-  const realByPair = new Map<string, RealGame>();
-  for (const rg of input.realGames) {
-    const k = pairKey(rg.homeTeam, rg.awayTeam);
-    const prev = realByPair.get(k);
-    if (!prev || rg.week > prev.week) realByPair.set(k, rg);
+  // reverse map: in-game name -> real name
+  const realByInGame = new Map<string, string>();
+  for (const [real, inGame] of input.teamMap) realByInGame.set(inGame, real);
+
+  // index wins by pair key
+  const winsByPair = new Map<string, ParsedWin[]>();
+  for (const w of input.wins) {
+    const k = pairKey(w.homeTeam, w.awayTeam);
+    if (!winsByPair.has(k)) winsByPair.set(k, []);
+    winsByPair.get(k)!.push(w);
   }
+  // index wins by real team -> entries (for FCS matching)
+  const winsByTeam = new Map<string, ParsedWin[]>();
+  for (const w of input.wins) {
+    for (const t of [w.homeTeam, w.awayTeam]) {
+      const k = norm(t);
+      if (!winsByTeam.has(k)) winsByTeam.set(k, []);
+      winsByTeam.get(k)!.push(w);
+    }
+  }
+
+  const noMatch = (g: DynastyGame, reason: string) => {
+    summary.gamesNoRealMatch++;
+    unmatched.push({ week: g.week, homeName: g.homeName, awayName: g.awayName, reason });
+  };
 
   for (const g of input.games) {
     if (g.weekType !== 'RegularSeason') continue;
@@ -92,42 +110,63 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
       continue;
     }
 
-    // map in-game names to normalized real names
-    const homeReal = [...input.teamMap.entries()].find(([, v]) => v === g.homeName)?.[0];
-    const awayReal = [...input.teamMap.entries()].find(([, v]) => v === g.awayName)?.[0];
-    if (!homeReal || !awayReal) {
-      summary.gamesNoRealMatch++;
-      unmatched.push({ week: g.week, homeName: g.homeName, awayName: g.awayName });
-      continue;
-    }
-
-    const real = realByPair.get(pairKey(homeReal, awayReal));
     const realWeek = g.week + input.weekOffset;
-    if (!real || Math.abs(real.week - realWeek) > 1) {
-      summary.gamesNoRealMatch++;
-      unmatched.push({ week: g.week, homeName: g.homeName, awayName: g.awayName });
+    const homeReal = realByInGame.get(g.homeName);
+    const awayReal = realByInGame.get(g.awayName);
+    const homeIsFcs = !homeReal && isGenericFcs(g.homeName);
+    const awayIsFcs = !awayReal && isGenericFcs(g.awayName);
+
+    let win: ParsedWin | null = null;
+
+    if (homeReal && awayReal) {
+      // standard: pair lookup within ±1 week
+      const cands = (winsByPair.get(pairKey(homeReal, awayReal)) ?? []).filter(
+        (w) => Math.abs(w.week - realWeek) <= 1,
+      );
+      // prefer exact week
+      win = cands.find((w) => w.week === realWeek) ?? cands[0] ?? null;
+    } else if ((homeIsFcs || awayIsFcs) && (homeReal || awayReal)) {
+      // FCS game: match by the FBS team's real games that week
+      const fbsReal = homeReal ?? awayReal!;
+      const cands = (winsByTeam.get(norm(fbsReal)) ?? []).filter((w) => Math.abs(w.week - realWeek) <= 1);
+      const exact = cands.filter((w) => w.week === realWeek);
+      const pool = exact.length ? exact : cands;
+      if (pool.length === 1) {
+        win = pool[0];
+      } else if (pool.length > 1) {
+        noMatch(g, `FBS team ${fbsReal} has ${pool.length} real games near week ${realWeek}`);
+        continue;
+      }
+    }
+
+    if (!win) {
+      noMatch(g, homeIsFcs || awayIsFcs ? 'FCS game, no real game for the FBS team that week' : 'no winners-file entry for this matchup');
       continue;
     }
 
-    // The dynasty value is relative to the DYNASTY home team: 'Home' when the
-    // real winner's identity matches the dynasty home team's real identity.
-    // Identity comparison (not position) keeps neutral-site games correct
-    // even when real vs dynasty home/away designations differ.
-    const homeWon = real.homeScore > real.awayScore;
-    const winnerReal = homeWon ? real.homeTeam : real.awayTeam;
-    const value = norm(winnerReal) === norm(homeReal) ? 'Home' : 'Away';
+    // Dynasty value is relative to the DYNASTY home team, by identity.
+    const winnerInGame = input.teamMap.get(win.winner);
+    let value: 'Home' | 'Away';
+    if (winnerInGame) {
+      value = winnerInGame === g.homeName ? 'Home' : 'Away';
+    } else {
+      // winner is a real FCS school: the FBS side lost -> winner is the
+      // dynasty FCS side
+      const fbsInGame = input.teamMap.get(win.homeTeam === win.winner ? win.awayTeam : win.homeTeam);
+      value = fbsInGame === g.homeName ? 'Away' : 'Home';
+    }
 
     assignments.push({
       gameIndex: g.index,
-      value: value as 'Home' | 'Away',
+      value,
       week: g.week,
       homeName: g.homeName,
       awayName: g.awayName,
       winnerName: value === 'Home' ? g.homeName : g.awayName,
-      realScore: `${real.homeScore}-${real.awayScore}`,
+      realScore: `${win.awayTeam} @ ${win.homeTeam}`,
     });
     summary.forceWinsApplied++;
   }
 
-  return { assignments, summary, unmatched, pending };
+  return { assignments, summary, unmatched };
 }
