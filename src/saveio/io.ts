@@ -101,6 +101,38 @@ export interface WriteResult {
   reset: number;
 }
 
+export interface VerifyRow {
+  gameIndex: number;
+  week: number;
+  homeName: string;
+  awayName: string;
+  expected: string;
+  found: string;
+  ok: boolean;
+}
+
+/** Re-read assigned rows and confirm ForceWin landed as planned. */
+export async function verifyForceWins(
+  file: any,
+  assignments: ForceWinAssignment[],
+): Promise<VerifyRow[]> {
+  const sgT = file.getTableByUniqueId(SEASON_GAME_UID);
+  await sgT.readRecords();
+  return assignments.map((a) => {
+    const row = sgT.records[a.gameIndex];
+    const found = row && !row.isEmpty ? String(sf(row, 'ForceWin') ?? '?') : '<missing>';
+    return {
+      gameIndex: a.gameIndex,
+      week: a.week,
+      homeName: a.homeName,
+      awayName: a.awayName,
+      expected: a.value,
+      found,
+      ok: found === a.value,
+    };
+  });
+}
+
 /**
  * Fields reverted by a quirk reset (MyDynasty's revertPreSimulatedGame).
  * Everything else on the row must be untouched — enforced below.

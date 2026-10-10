@@ -9,7 +9,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { parseWinnersFile } from './reallife/winners.js';
 import { planRealLifeForceWin } from './engine/planner.js';
-import { openSave, readSchedule, writeForceWins } from './saveio/io.js';
+import { openSave, readSchedule, writeForceWins, verifyForceWins } from './saveio/io.js';
 
 const rl = createInterface({ input, output });
 const ask = (q: string) => rl.question(q);
@@ -100,13 +100,36 @@ async function main(): Promise<void> {
   }
 
   const result = await writeForceWins(file, savePath, plan.assignments);
-  console.log(
-    `Done. ${result.written} games forced${result.reset ? ` (${result.reset} quirk rows reset first)` : ''}. Backup: ${result.backupPath}`,
-  );
+
+  // verify: re-read the rows and confirm ForceWin landed
+  console.log('Verifying writes…');
+  const verify = await verifyForceWins(file, plan.assignments);
+  const failed = verify.filter((v) => !v.ok);
+
+  console.log('\n================ RESULT ================');
+  if (!failed.length) {
+    console.log(`  SUCCESS — ${verify.length} games forced${result.reset ? ` (${result.reset} quirk rows reset first)` : ''}.`);
+  } else {
+    console.log(`  PARTIAL — ${verify.length - failed.length} succeeded, ${failed.length} FAILED:`);
+    for (const f of failed.slice(0, 10)) {
+      console.log(`    ! wk${f.week} ${f.awayName} @ ${f.homeName} — expected ${f.expected}, found ${f.found}`);
+    }
+    if (failed.length > 10) console.log(`    …and ${failed.length - 10} more`);
+  }
+  if (plan.unmatched.length) {
+    console.log(`  ${plan.unmatched.length} games had no real-life match (left to sim):`);
+    for (const u of plan.unmatched.slice(0, 5)) {
+      console.log(`    - wk${u.week} ${u.awayName} @ ${u.homeName} (${u.reason})`);
+    }
+    if (plan.unmatched.length > 5) console.log(`    …and ${plan.unmatched.length - 5} more`);
+  }
+  console.log(`  Backup: ${result.backupPath}`);
+  console.log('========================================');
+
   writeFileSync(
     'forcewin-manifest.json',
     JSON.stringify(
-      { createdAt: new Date().toISOString(), winnersFile: winnersPath, assignments: plan.assignments, summary: s },
+      { createdAt: new Date().toISOString(), winnersFile: winnersPath, assignments: plan.assignments, summary: s, verifyFailed: failed },
       null,
       2,
     ),
