@@ -47,4 +47,5 @@ npm run build:exe    # pkg -> release/CFB27-ForceWin.exe
 ## Git
 
 - Every commit is authored by Kevin. No AI `Co-Authored-By` trailer.
-- No remote is configured yet. Check `git remote -v` before pushing anything.
+- Remote: `origin` → `github.com/KevinMilesCode/real-wins-force-win` (private).
+  Check `git remote -v` before pushing anything.
