@@ -7,7 +7,7 @@ Writing `'Home'` or `'Away'` on a schedule row **pre-decides that game's simmed
 result in the favorite's favor without touching a single player rating**.
 This is the game's own steering mechanism — the vendored tool
 (`cfb27-force-win` v0.5, ArtVsTheWorld/"Ace", MIT, already ported in
-`CFB27-Dynasty-Engine-Dev/app/src/engine/forceWin.ts`) uses it, and so will we.
+`Archived/CFB27-Dynasty-Engine-Dev/app/src/engine/forceWin.ts`) uses it, and so will we.
 
 The write is surgical: only the `ForceWin` field changes. The ported writer
 validates with a before/after snapshot that nothing else on the row moved

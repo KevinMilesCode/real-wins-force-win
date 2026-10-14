@@ -15,7 +15,7 @@
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "build:exe": "pkg dist/bootstrap.js --target node18-win-x64 --output ../release/CFB27-ForceWin.exe"
+    "build:exe": "pkg dist/bootstrap.js --target node18-win-x64 --output release/CFB27-ForceWin.exe"
   },
   "type": "module",
   "version": "0.1.0"
