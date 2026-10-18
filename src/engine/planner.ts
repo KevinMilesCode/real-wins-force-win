@@ -26,7 +26,7 @@ export interface PlanInput {
   /**
    * When true, a matched game whose row is pre-decided (status != Unplayed
    * but IsSimmed — the week-0 quirk) is reverted to unplayed and forced,
-   * instead of skipped. Mirrors MyDynasty's revertPreSimulatedGame.
+   * instead of skipped.
    */
   resetPredecided: boolean;
 }
@@ -101,7 +101,7 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
     if (g.weekType !== 'RegularSeason') continue;
     summary.gamesFound++;
 
-    // Pre-decided rows: the vendored tool skips these outright. With
+    // Pre-decided rows: the upstream tool skips these outright. With
     // resetPredecided, rows carrying the week-0 quirk (IsSimmed but the
     // season hasn't started) are reverted to unplayed below instead.
     // A row the user actually played (not simmed) is never reset.

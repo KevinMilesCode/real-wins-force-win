@@ -1,6 +1,6 @@
 // Manual winners file: the source of truth for real-life results.
 //
-// Kevin updates this by hand each week. Format:
+// Updated by hand each week. Format:
 //
 //   {
 //     "season": 2026,

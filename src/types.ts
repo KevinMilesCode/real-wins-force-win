@@ -29,7 +29,7 @@ export interface ForceWinAssignment {
   /**
    * True when the row must first be reverted to unplayed (the pre-decided
    * quirk): GameStatus -> Unplayed, IsSimmed -> false, all scores -> 0.
-   * Mirrors MyDynasty's revertPreSimulatedGame.
+   *
    */
   reset: boolean;
 }

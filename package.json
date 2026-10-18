@@ -15,7 +15,7 @@
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "build:exe": "pkg dist/cli.js --targets node22-win-x64 --output CFB27-ForceWin.exe"
+    "build:exe": "pkg dist/cli.js --targets node22-win-x64 --output release/CFB27-ForceWin.exe"
   },
   "pkg": {
     "assets": [
@@ -33,5 +33,15 @@
   "bugs": {
     "url": "https://github.com/KevinMilesCode/real-wins-force-win/issues"
   },
-  "homepage": "https://github.com/KevinMilesCode/real-wins-force-win#readme"
+  "homepage": "https://github.com/KevinMilesCode/real-wins-force-win#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "cfb27",
+    "college-football",
+    "dynasty",
+    "ea-sports",
+    "save-editor"
+  ]
 }

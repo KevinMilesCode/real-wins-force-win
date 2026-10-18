@@ -131,7 +131,7 @@ export async function verifyForceWins(
 }
 
 /**
- * Fields reverted by a quirk reset (MyDynasty's revertPreSimulatedGame).
+ * Fields reverted by a quirk reset .
  * Everything else on the row must be untouched — enforced below.
  */
 const RESET_FIELDS: Record<string, unknown> = {

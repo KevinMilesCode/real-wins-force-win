@@ -140,6 +140,10 @@ async function main(): Promise<void> {
 main()
   .catch((e) => {
     console.error('FATAL', e instanceof Error ? e.message : String(e));
-    process.exit(1);
+    process.exitCode = 1;
   })
-  .finally(() => rl.close());
+  .finally(async () => {
+    // Keep the window open when launched by double-click.
+    if (process.stdin.isTTY) await rl.question('\nPress Enter to exit...').catch(() => {});
+    rl.close();
+  });

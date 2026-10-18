@@ -9,7 +9,7 @@ covers the game field and matching rules.
 A CLI that mirrors real-life college football results into a CFB27 dynasty by
 writing `SeasonGame.ForceWin` ('Home' / 'Away') on schedule rows. The real
 winner from `winners.json` is the winner. No RNG, no live lookups, no ratings.
-Ported from the vendored `cfb27-force-win` writer; the original ratings-based
+Ported from the community `cfb27-force-win` writer (see NOTICE.md); the original ratings-based
 logic in `Archived/CFB27-Dynasty-Engine-Dev` is reference only, not replaced code.
 
 ## Commands
@@ -47,5 +47,5 @@ npm run build:exe    # pkg -> release/CFB27-ForceWin.exe
 ## Git
 
 - Every commit is authored by Kevin. No AI `Co-Authored-By` trailer.
-- Remote: `origin` → `github.com/KevinMilesCode/real-wins-force-win` (private).
+- Remote: `origin` → `github.com/KevinMilesCode/real-wins-force-win`.
   Check `git remote -v` before pushing anything.
