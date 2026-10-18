@@ -5,18 +5,33 @@
   "description": "CFB27 real-life force-win: mirror actual college football results via SeasonGame.ForceWin",
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@yao-pkg/pkg": "^6.23.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.3"
   },
-  "name": "cfb27-force-win",
-  "private": true,
+  "name": "real-wins-force-win",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
-    "build:exe": "pkg dist/bootstrap.js --target node18-win-x64 --output release/CFB27-ForceWin.exe"
+    "build:exe": "pkg dist/cli.js --targets node22-win-x64 --output CFB27-ForceWin.exe"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/madden-franchise/data/**/*"
+    ]
   },
   "type": "module",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Kevin Joyner",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KevinMilesCode/real-wins-force-win.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KevinMilesCode/real-wins-force-win/issues"
+  },
+  "homepage": "https://github.com/KevinMilesCode/real-wins-force-win#readme"
 }

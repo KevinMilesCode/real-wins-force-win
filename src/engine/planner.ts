@@ -143,15 +143,24 @@ export function planRealLifeForceWin(input: PlanInput): PlanResult {
       // prefer exact week
       win = cands.find((w) => w.week === realWeek) ?? cands[0] ?? null;
     } else if ((homeIsFcs || awayIsFcs) && (homeReal || awayReal)) {
-      // FCS game: match by the FBS team's real games that week
+      // FCS game: match by the FBS team's real games that week, restricted to
+      // games whose opponent is a real FCS school (absent from the team map).
+      // A team that also plays an FBS game that week (the week-0 + week-1
+      // double slate) would otherwise yield two candidates and go unmatched.
       const fbsReal = homeReal ?? awayReal!;
-      const cands = (winsByTeam.get(norm(fbsReal)) ?? []).filter((w) => Math.abs(w.week - realWeek) <= 1);
+      const opponentIsFcs = (w: ParsedWin) => {
+        const other = w.homeTeam === fbsReal ? w.awayTeam : w.homeTeam;
+        return !input.teamMap.has(other);
+      };
+      const cands = (winsByTeam.get(norm(fbsReal)) ?? []).filter(
+        (w) => Math.abs(w.week - realWeek) <= 1 && opponentIsFcs(w),
+      );
       const exact = cands.filter((w) => w.week === realWeek);
       const pool = exact.length ? exact : cands;
       if (pool.length === 1) {
         win = pool[0];
       } else if (pool.length > 1) {
-        noMatch(g, `FBS team ${fbsReal} has ${pool.length} real games near week ${realWeek}`);
+        noMatch(g, `FBS team ${fbsReal} has ${pool.length} real FCS games near week ${realWeek}`);
         continue;
       }
     }

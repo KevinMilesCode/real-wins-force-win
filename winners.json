@@ -1884,6 +1884,10 @@
         "winner": "Miami Hurricanes"
       },
       {
+        "matchup": "Fresno State Bulldogs @ San Diego State Aztecs",
+        "winner": "San Diego State Aztecs"
+      },
+      {
         "matchup": "Georgia Southern Eagles @ Old Dominion Monarchs",
         "winner": "Georgia Southern Eagles"
       },
@@ -1936,8 +1940,20 @@
         "winner": "Ole Miss Rebels"
       },
       {
+        "matchup": "Navy Midshipmen @ UTSA Roadrunners",
+        "winner": "UTSA Roadrunners"
+      },
+      {
+        "matchup": "Nebraska Cornhuskers @ Oregon Ducks",
+        "winner": "Oregon Ducks"
+      },
+      {
         "matchup": "Nevada Wolf Pack @ North Dakota State Bison",
         "winner": "North Dakota State Bison"
+      },
+      {
+        "matchup": "New Mexico Lobos @ Hawai'i Rainbow Warriors",
+        "winner": "New Mexico Lobos"
       },
       {
         "matchup": "North Carolina Tar Heels @ Duke Blue Devils",
@@ -1950,6 +1966,14 @@
       {
         "matchup": "Northwestern Wildcats @ Michigan State Spartans",
         "winner": "Northwestern Wildcats"
+      },
+      {
+        "matchup": "Notre Dame Fighting Irish @ BYU Cougars",
+        "winner": "BYU Cougars"
+      },
+      {
+        "matchup": "Ohio Bobcats @ Sacramento State Hornets",
+        "winner": "Ohio Bobcats"
       },
       {
         "matchup": "Ohio State Buckeyes @ Indiana Hoosiers",
@@ -1970,6 +1994,10 @@
       {
         "matchup": "Rutgers Scarlet Knights @ Maryland Terrapins",
         "winner": "Rutgers Scarlet Knights"
+      },
+      {
+        "matchup": "San Jos\u00e9 State Spartans @ UTEP Miners",
+        "winner": "San Jos\u00e9 State Spartans"
       },
       {
         "matchup": "TCU Horned Frogs @ Baylor Bears",
@@ -1996,8 +2024,16 @@
         "winner": "Air Force Falcons"
       },
       {
+        "matchup": "Utah Utes @ Colorado Buffaloes",
+        "winner": "Utah Utes"
+      },
+      {
         "matchup": "Virginia Cavaliers @ SMU Mustangs",
         "winner": "SMU Mustangs"
+      },
+      {
+        "matchup": "Wake Forest Demon Deacons @ California Golden Bears",
+        "winner": "Wake Forest Demon Deacons"
       },
       {
         "matchup": "Washington Huskies @ Purdue Boilermakers",

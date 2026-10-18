@@ -4,11 +4,9 @@
 // Table/field contract from FORCE_WIN_MECHANICS.md. Reuses the binary-ref
 // helpers from the auto-recruit tool's table adapter.
 
-import { createRequire } from 'node:module';
 import { copyFileSync } from 'node:fs';
+import { FranchiseFile } from 'madden-franchise';
 import type { DynastyGame, ForceWinAssignment } from '../types.js';
-
-const require = createRequire(import.meta.url);
 
 // SeasonGame uniqueId — confirmed against CFB27-Dynasty-Engine-Dev registry
 // (app/src/saveio/cfb27/registry.ts: seasonGame: 4049338978).
@@ -30,9 +28,8 @@ function sf<T = unknown>(rec: any, field: string): T | undefined {
 }
 
 export async function openSave(savePath: string): Promise<any> {
-  const { FranchiseFile } = require('madden-franchise');
   return new Promise((resolve, reject) => {
-    const f = new FranchiseFile(savePath, { autoParse: false });
+    const f = new FranchiseFile(savePath, { autoParse: false } as any);
     f.on('ready', () => resolve(f));
     f.on('error', reject);
     f.parse();

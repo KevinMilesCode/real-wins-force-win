@@ -1,7 +1,11 @@
 node_modules/
 dist/
 release/
+CFB27-ForceWin.exe
 *.log
 .DS_Store
 downloads/
 *.db
+.scratch/
+.claude/
+forcewin-manifest.json

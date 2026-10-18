@@ -7,6 +7,7 @@
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { parseWinnersFile } from './reallife/winners.js';
 import { planRealLifeForceWin } from './engine/planner.js';
 import { openSave, readSchedule, writeForceWins, verifyForceWins } from './saveio/io.js';
@@ -16,6 +17,13 @@ const ask = (q: string) => rl.question(q);
 async function confirm(q: string): Promise<boolean> {
   const a = (await ask(`${q} [y/N] `)).trim().toLowerCase();
   return a === 'y' || a === 'yes';
+}
+
+/** Locate an input file: the exe's own folder first (packaged), then CWD. */
+function locateFile(name: string): string | null {
+  return (
+    [join(dirname(process.execPath), name), join(process.cwd(), name)].find((p) => existsSync(p)) ?? null
+  );
 }
 
 async function main(): Promise<void> {
@@ -30,39 +38,32 @@ async function main(): Promise<void> {
   console.log(`  ${sched.games.length} schedule rows, current week ${sched.currentWeek}`);
 
   // team mapping: real name -> in-game DisplayName (FCS schools need no entry)
-  const mapPath = (await ask('Team map file [teams.json]: ')).trim() || 'teams.json';
   let teamMap = new Map<string, string>();
-  if (existsSync(mapPath)) {
+  const mapPath = locateFile('teams.json');
+  if (mapPath) {
     const raw = JSON.parse(readFileSync(mapPath, 'utf8'));
     teamMap = new Map(Object.entries(raw).filter(([k]) => !k.startsWith('_')) as [string, string][]);
     console.log(`  ${teamMap.size} mapped teams`);
   } else {
-    console.log('  no team map — only FCS matching will work. Create teams.json first.');
+    console.warn('  teams.json not found — FCS-only matching will be limited.');
   }
 
-  const winnersPath = (await ask('Winners file [winners.json]: ')).trim() || 'winners.json';
+  const winnersPath = locateFile('winners.json');
+  if (!winnersPath) {
+    throw new Error('winners.json not found (looked next to the executable and in the current directory)');
+  }
   const wins = parseWinnersFile(winnersPath);
   console.log(`  ${wins.length} real results loaded`);
 
-  // warn on winners-file teams with no mapping (excluding FCS schools)
-  const seenReal = new Set(wins.flatMap((w) => [w.homeTeam, w.awayTeam]));
-  for (const name of [...seenReal].sort()) {
-    if (!teamMap.has(name)) console.log(`  unmapped (assumed FCS): ${name}`);
-  }
-
-  const forceUser = await confirm('Force user-team games too?');
-  const resetQuirks = await confirm(
-    'Reset pre-decided quirk games (IsSimmed rows reverted to unplayed, then forced)?',
-  );
   const plan = planRealLifeForceWin({
     games: sched.games,
     teamMap,
     wins,
     userTeams: sched.userTeams,
-    forceUserGames: forceUser,
+    forceUserGames: true,
     conferenceChampionshipWeek: sched.conferenceChampionshipWeek,
     weekOffset: 0, // verified vs real save: dynasty week N == real week N
-    resetPredecided: resetQuirks,
+    resetPredecided: true,
   });
 
   const resets = plan.assignments.filter((a) => a.reset);
@@ -94,7 +95,7 @@ async function main(): Promise<void> {
     console.log('Nothing to force.');
     return;
   }
-  if (!(await confirm(`\nWrite these ForceWin assignments to the save${resets.length ? ` (including ${resets.length} quirk resets)` : ''}?`))) {
+  if (!(await confirm('Commit to save?'))) {
     console.log('Aborted — save untouched.');
     return;
   }

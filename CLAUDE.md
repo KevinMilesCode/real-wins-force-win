@@ -38,7 +38,7 @@ npm run build:exe    # pkg -> release/CFB27-ForceWin.exe
 ## Where things live
 
 - `src/cli.ts` — save → team map → winners file → preview → confirm → write → verify
-- `src/reallife/` — winners-file parser and ESPN source
+- `src/reallife/` — winners-file parser
 - `src/engine/planner.ts` — pure matching of dynasty games to real games
 - `src/saveio/io.ts` — read/write ForceWin with snapshot validation
 - Shared facts: `G:\Tools\EA Sports\Development\CFB\CFB27-Modding-Knowledge\INDEX.md`
