@@ -1805,6 +1805,220 @@
         "matchup": "Hawai'i Rainbow Warriors @ Arizona State Sun Devils",
         "winner": "Arizona State Sun Devils"
       }
+    ],
+    "7": [
+      {
+        "matchup": "Akron Zips @ Miami (OH) RedHawks",
+        "winner": "Miami (OH) RedHawks"
+      },
+      {
+        "matchup": "Alabama Crimson Tide @ Tennessee Volunteers",
+        "winner": "Tennessee Volunteers"
+      },
+      {
+        "matchup": "App State Mountaineers @ Coastal Carolina Chanticleers",
+        "winner": "App State Mountaineers"
+      },
+      {
+        "matchup": "Arizona State Sun Devils @ Texas Tech Red Raiders",
+        "winner": "Texas Tech Red Raiders"
+      },
+      {
+        "matchup": "Arkansas Razorbacks @ Vanderbilt Commodores",
+        "winner": "Arkansas Razorbacks"
+      },
+      {
+        "matchup": "Arkansas State Red Wolves @ Southern Miss Golden Eagles",
+        "winner": "Arkansas State Red Wolves"
+      },
+      {
+        "matchup": "Auburn Tigers @ Georgia Bulldogs",
+        "winner": "Auburn Tigers"
+      },
+      {
+        "matchup": "Ball State Cardinals @ Bowling Green Falcons",
+        "winner": "Ball State Cardinals"
+      },
+      {
+        "matchup": "Charleston Southern Buccaneers @ Clemson Tigers",
+        "winner": "Clemson Tigers"
+      },
+      {
+        "matchup": "Charlotte 49ers @ Temple Owls",
+        "winner": "Charlotte 49ers"
+      },
+      {
+        "matchup": "Cincinnati Bearcats @ West Virginia Mountaineers",
+        "winner": "West Virginia Mountaineers"
+      },
+      {
+        "matchup": "Colorado State Rams @ Texas State Bobcats",
+        "winner": "Texas State Bobcats"
+      },
+      {
+        "matchup": "Delaware Blue Hens @ Middle Tennessee Blue Raiders",
+        "winner": "Middle Tennessee Blue Raiders"
+      },
+      {
+        "matchup": "East Carolina Pirates @ UAB Blazers",
+        "winner": "UAB Blazers"
+      },
+      {
+        "matchup": "Elon Phoenix @ Stanford Cardinal",
+        "winner": "Stanford Cardinal"
+      },
+      {
+        "matchup": "Florida Atlantic Owls @ Army Black Knights",
+        "winner": "Army Black Knights"
+      },
+      {
+        "matchup": "Florida Gators @ Texas Longhorns",
+        "winner": "Florida Gators"
+      },
+      {
+        "matchup": "Florida International Panthers @ Jacksonville State Gamecocks",
+        "winner": "Jacksonville State Gamecocks"
+      },
+      {
+        "matchup": "Florida State Seminoles @ Miami Hurricanes",
+        "winner": "Miami Hurricanes"
+      },
+      {
+        "matchup": "Georgia Southern Eagles @ Old Dominion Monarchs",
+        "winner": "Georgia Southern Eagles"
+      },
+      {
+        "matchup": "Georgia State Panthers @ James Madison Dukes",
+        "winner": "James Madison Dukes"
+      },
+      {
+        "matchup": "Georgia Tech Yellow Jackets @ Virginia Tech Hokies",
+        "winner": "Virginia Tech Hokies"
+      },
+      {
+        "matchup": "Kansas Jayhawks @ Kansas State Wildcats",
+        "winner": "Kansas State Wildcats"
+      },
+      {
+        "matchup": "Kennesaw State Owls @ Missouri State Bears",
+        "winner": "Missouri State Bears"
+      },
+      {
+        "matchup": "Kent State Golden Flashes @ South Florida Bulls",
+        "winner": "South Florida Bulls"
+      },
+      {
+        "matchup": "Kentucky Wildcats @ Oklahoma Sooners",
+        "winner": "Kentucky Wildcats"
+      },
+      {
+        "matchup": "Louisiana Tech Bulldogs @ UL Monroe Warhawks",
+        "winner": "Louisiana Tech Bulldogs"
+      },
+      {
+        "matchup": "Louisville Cardinals @ Syracuse Orange",
+        "winner": "Louisville Cardinals"
+      },
+      {
+        "matchup": "Massachusetts Minutemen @ Buffalo Bulls",
+        "winner": "Buffalo Bulls"
+      },
+      {
+        "matchup": "Memphis Tigers @ Tulane Green Wave",
+        "winner": "Tulane Green Wave"
+      },
+      {
+        "matchup": "Mississippi State Bulldogs @ LSU Tigers",
+        "winner": "LSU Tigers"
+      },
+      {
+        "matchup": "Missouri Tigers @ Ole Miss Rebels",
+        "winner": "Ole Miss Rebels"
+      },
+      {
+        "matchup": "Nevada Wolf Pack @ North Dakota State Bison",
+        "winner": "North Dakota State Bison"
+      },
+      {
+        "matchup": "North Carolina Tar Heels @ Duke Blue Devils",
+        "winner": "North Carolina Tar Heels"
+      },
+      {
+        "matchup": "Northern Illinois Huskies @ Wyoming Cowboys",
+        "winner": "Wyoming Cowboys"
+      },
+      {
+        "matchup": "Northwestern Wildcats @ Michigan State Spartans",
+        "winner": "Northwestern Wildcats"
+      },
+      {
+        "matchup": "Ohio State Buckeyes @ Indiana Hoosiers",
+        "winner": "Ohio State Buckeyes"
+      },
+      {
+        "matchup": "Oklahoma State Cowboys @ Houston Cougars",
+        "winner": "Houston Cougars"
+      },
+      {
+        "matchup": "Penn State Nittany Lions @ Michigan Wolverines",
+        "winner": "Michigan Wolverines"
+      },
+      {
+        "matchup": "Pittsburgh Panthers @ Boston College Eagles",
+        "winner": "Boston College Eagles"
+      },
+      {
+        "matchup": "Rutgers Scarlet Knights @ Maryland Terrapins",
+        "winner": "Rutgers Scarlet Knights"
+      },
+      {
+        "matchup": "TCU Horned Frogs @ Baylor Bears",
+        "winner": "TCU Horned Frogs"
+      },
+      {
+        "matchup": "The Citadel Bulldogs @ Texas A&M Aggies",
+        "winner": "Texas A&M Aggies"
+      },
+      {
+        "matchup": "Toledo Rockets @ Eastern Michigan Eagles",
+        "winner": "Toledo Rockets"
+      },
+      {
+        "matchup": "Troy Trojans @ Louisiana Ragin' Cajuns",
+        "winner": "Louisiana Ragin' Cajuns"
+      },
+      {
+        "matchup": "Tulsa Golden Hurricane @ Rice Owls",
+        "winner": "Tulsa Golden Hurricane"
+      },
+      {
+        "matchup": "UNLV Rebels @ Air Force Falcons",
+        "winner": "Air Force Falcons"
+      },
+      {
+        "matchup": "Virginia Cavaliers @ SMU Mustangs",
+        "winner": "SMU Mustangs"
+      },
+      {
+        "matchup": "Washington Huskies @ Purdue Boilermakers",
+        "winner": "Washington Huskies"
+      },
+      {
+        "matchup": "Washington State Cougars @ Oregon State Beavers",
+        "winner": "Oregon State Beavers"
+      },
+      {
+        "matchup": "Western Kentucky Hilltoppers @ Sam Houston Bearkats",
+        "winner": "Western Kentucky Hilltoppers"
+      },
+      {
+        "matchup": "Western Michigan Broncos @ Central Michigan Chippewas",
+        "winner": "Western Michigan Broncos"
+      },
+      {
+        "matchup": "Wisconsin Badgers @ UCLA Bruins",
+        "winner": "UCLA Bruins"
+      }
     ]
   }
 }
