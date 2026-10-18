@@ -19,7 +19,7 @@ RNG, no live lookups, no ratings changes.
 2. **Copy your dynasty save to a safe place first** (saves live in
    `Documents\EA SPORTS College Football 27\saves`).
 3. Start a new dynasty and save at **week 0 (preseason)**.
-4. Run `CFB27-ForceWin.exe`, enter the save path, review the preview, and
+4. Run `CFB27-ForceWin.exe`, pick your save from the list (or paste a path; quotes are fine), review the preview, and
    confirm.
 5. Load the save in-game and check that the forced results hold.
 

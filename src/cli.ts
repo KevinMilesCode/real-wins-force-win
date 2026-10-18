@@ -6,7 +6,8 @@
 
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { parseWinnersFile } from './reallife/winners.js';
 import { planRealLifeForceWin } from './engine/planner.js';
@@ -26,11 +27,64 @@ function locateFile(name: string): string | null {
   );
 }
 
+/** Strip whitespace and wrapping quotes ("Copy as path" adds them). */
+function cleanPath(p: string): string {
+  return p.trim().replace(/^["']+|["']+$/g, '').trim();
+}
+
+/** Default save folders, in the order checked (Documents may be redirected to OneDrive). */
+function saveFolders(): string[] {
+  const home = homedir();
+  const sub = join('EA SPORTS College Football 27', 'saves');
+  return [
+    join(home, 'Documents', sub),
+    join(home, 'OneDrive', 'Documents', sub),
+    ...(process.env.OneDrive ? [join(process.env.OneDrive, 'Documents', sub)] : []),
+  ].filter((p, i, a) => a.indexOf(p) === i && existsSync(p));
+}
+
+/** Save files in the default folders, newest first; backups and folders excluded. */
+function listSaves(): { name: string; path: string }[] {
+  const out: { name: string; path: string; mtime: number }[] = [];
+  for (const dir of saveFolders()) {
+    for (const name of readdirSync(dir)) {
+      if (/\.bak-/i.test(name)) continue;
+      const path = join(dir, name);
+      const st = statSync(path);
+      if (st.isFile()) out.push({ name, path, mtime: st.mtimeMs });
+    }
+  }
+  return out.sort((a, b) => b.mtime - a.mtime);
+}
+
+async function chooseSave(): Promise<string> {
+  const saves = listSaves();
+  if (saves.length) {
+    console.log('Pick a save from your EA SPORTS College Football 27 saves folder,');
+    console.log('or paste a full path instead:\n');
+    saves.forEach((s, i) => console.log(`  ${String(i + 1).padStart(2)}. ${s.name}`));
+    console.log();
+  } else {
+    console.log('No saves found in the default folder — paste the full path to your save.\n');
+  }
+  for (;;) {
+    const answer = cleanPath(await ask(saves.length ? 'Number or path: ' : 'Save path: '));
+    if (!answer) continue;
+    if (/^\d+$/.test(answer)) {
+      const pick = saves[Number(answer) - 1];
+      if (pick) return pick.path;
+      console.log(`  No save numbered ${answer}.`);
+      continue;
+    }
+    if (existsSync(answer) && statSync(answer).isFile()) return answer;
+    console.log('  That file does not exist — try again.');
+  }
+}
+
 async function main(): Promise<void> {
   console.log('CFB27 Force Win — manual real-life winners (one run at week 0)\n');
 
-  const savePath = (await ask('Dynasty save path: ')).trim();
-  if (!savePath) throw new Error('no save path given');
+  const savePath = await chooseSave();
 
   console.log('Opening save…');
   const file = await openSave(savePath);
